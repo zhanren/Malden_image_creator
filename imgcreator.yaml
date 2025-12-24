@@ -1,0 +1,35 @@
+# imgcreator configuration
+# Documentation: https://github.com/malden/imgcreator
+
+# API Configuration
+api:
+  provider: volcengine
+  # Model options: "图片生成4.0", "文生图3.1"
+  model: "图片生成4.0"
+
+# Default generation settings
+defaults:
+  width: 1024
+  height: 1024
+  # Default style applied to all prompts
+  style: "flat, minimal, modern"
+
+# Output configuration
+output:
+  base_dir: ./output
+  # Naming pattern: {timestamp}_{id}.png
+  naming: "{timestamp}_{id}"
+
+# Export profiles
+export:
+  ios:
+    enabled: true
+    scales: ["@1x", "@2x", "@3x"]
+  android:
+    enabled: true
+    densities: ["mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi"]
+  custom:
+    # Add custom sizes here
+    # - width: 100
+    #   height: 100
+    #   suffix: "_thumb"
