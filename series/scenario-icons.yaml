@@ -1,5 +1,12 @@
 name: scenario-icons
-template: "A friendly golden puppy mascot, 2D cartoon style, premium mobile app illustration, consistent character design, soft warm lighting, clean shapes, minimal clutter, high resolution, sharp focus, no text, no watermark. Dog acting in the {{scenario}} context, {{details}}, friendly and clear expression, centered composition, strong silhouette, square format, transparent background, designed for a mobile app scenario card. IMPORTANT: Match the reference image style exactly - same character design, same art style, same color palette, same proportions, same visual treatment. The reference image style is the highest priority."
+template: "
+一只友好的金色小狗吉祥物，戴着帽子，2D卡通风格， 
+{{scenario}}， 
+友好表情，居中构图，方形格式，透明背景。 
+风格：柔和温暖的光线，简洁的形状，极简设计，高分辨率，清晰对焦。 
+约束：无文字，无水印，无圆形或圆形边界。 
+用途：移动应用场景卡片图标。
+"
 
 defaults: {}
 
@@ -7,57 +14,48 @@ config:
   width: 1024
   height: 1024
   style: null  # Style is already included in the template
-  reference_image: "./assets/icon-style.png"  # Use reference image for style transfer
+  reference_image: 
+    - "./assets/icon-style.png" # Use reference image for style transfer
   # Model: 文生图3.1 is default from imgcreator.yaml
 
 items:
   # 机场 (Airport / Arrival / Departure)
   - id: airport
-    scenario: "airport arrival and departure"
-    details: "wearing casual travel clothes, holding suitcase or travel bag"
+    scenario: "背景换成机场，在机场候机大厅"
 
   # 出租车 (Taxi / Ride)
   - id: taxi
-    scenario: "taxi or ride-hailing"
-    details: "wearing casual clothing, holding smartphone or hailing a taxi"
+    scenario: "背景换成城市街道，在出租车旁"
 
   # 酒店 (Hotel)
   - id: hotel
-    scenario: "hotel check-in"
-    details: "wearing travel clothing, holding room key or luggage"
+    scenario: "背景换成酒店大堂，在酒店前台"
 
   # 餐厅 (Restaurant)
   - id: restaurant
-    scenario: "restaurant dining"
-    details: "wearing casual clothing, holding menu or plate of food"
+    scenario: "背景换成餐厅，在餐厅内"
 
   # 付款 (Payment)
   - id: payment
-    scenario: "making a payment"
-    details: "wearing casual clothing, holding credit card or smartphone with payment app"
+    scenario: "背景换成商店，在收银台"
 
   # 购物 (Shopping)
   - id: shopping
-    scenario: "shopping"
-    details: "wearing casual clothing, holding shopping bag"
+    scenario: "背景换成商场，在购物中心"
 
   # 问路 (Asking Directions)
   - id: directions
-    scenario: "asking for directions"
-    details: "wearing casual clothing, holding map or smartphone with map"
+    scenario: "背景换成城市街道，在路口"
 
   # 紧急情况 (Emergency)
   - id: emergency
-    scenario: "emergency situation"
-    details: "wearing casual clothing, holding phone calling for help"
+    scenario: "背景换成城市街道，在紧急情况下"
 
   # 标识 (Signs / Symbols)
   - id: signs
-    scenario: "reading signs and symbols"
-    details: "wearing casual clothing, pointing at a sign or looking at direction signs"
+    scenario: "背景换成公共场所，在指示牌前"
 
   # 咖啡 (Coffee)
   - id: coffee
-    scenario: "coffee shop"
-    details: "wearing casual clothing, holding coffee cup"
+    scenario: "背景换成咖啡店，在咖啡店内"
 

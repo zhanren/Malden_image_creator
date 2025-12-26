@@ -1,5 +1,12 @@
 name: roleplay-roles
-template: "A friendly golden puppy mascot, 3D cartoon style, premium mobile app illustration, consistent character design, soft warm lighting, clean shapes, minimal clutter, high resolution, sharp focus, no text, no watermark. Dog acting as a {{role}}, {{details}}, friendly and professional expression, centered composition, square format, transparent background, designed for a mobile app role-play screen."
+template: "
+一只友好的金色小狗吉祥物，戴着帽子，2D卡通风格， 
+扮演{{role}}角色，{{details}}， 
+友好且专业的表情，居中构图，方形格式，透明背景。 
+风格：柔和温暖的光线，简洁的形状，极简设计，高分辨率，清晰对焦。 
+约束：无文字，无水印，无圆形或圆形边界。 
+用途：移动应用角色扮演屏幕角色图标。
+"
 
 defaults: {}
 
@@ -12,21 +19,21 @@ config:
 items:
   # Restaurant → waiter dog
   - id: waiter
-    role: "restaurant waiter"
-    details: "wearing waiter uniform with apron, holding menu or serving tray"
+    role: "餐厅服务员"
+    details: "穿着服务员制服和围裙，拿着菜单或托盘"
 
   # Taxi → driver dog
   - id: driver
-    role: "taxi driver"
-    details: "wearing professional driver attire, holding steering wheel or taxi sign"
+    role: "出租车司机"
+    details: "穿着专业司机服装，拿着方向盘或出租车标志"
 
   # Hotel → front desk dog
   - id: front-desk
-    role: "hotel front desk receptionist"
-    details: "wearing professional hotel uniform, holding room key or reservation book"
+    role: "酒店前台接待员"
+    details: "穿着专业酒店制服，拿着房间钥匙或预订簿"
 
   # Coffee → barista dog
   - id: barista
-    role: "coffee shop barista"
-    details: "wearing barista apron and casual uniform, holding coffee cup or espresso machine"
+    role: "咖啡师"
+    details: "穿着咖啡师围裙和休闲制服，拿着咖啡杯或意式咖啡机"
 
