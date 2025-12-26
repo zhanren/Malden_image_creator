@@ -1,0 +1,63 @@
+name: scenario-icons
+template: "A friendly golden puppy mascot, 2D cartoon style, premium mobile app illustration, consistent character design, soft warm lighting, clean shapes, minimal clutter, high resolution, sharp focus, no text, no watermark. Dog acting in the {{scenario}} context, {{details}}, friendly and clear expression, centered composition, strong silhouette, square format, transparent background, designed for a mobile app scenario card. IMPORTANT: Match the reference image style exactly - same character design, same art style, same color palette, same proportions, same visual treatment. The reference image style is the highest priority."
+
+defaults: {}
+
+config:
+  width: 1024
+  height: 1024
+  style: null  # Style is already included in the template
+  reference_image: "./assets/icon-style.png"  # Use reference image for style transfer
+  # Model: 文生图3.1 is default from imgcreator.yaml
+
+items:
+  # 机场 (Airport / Arrival / Departure)
+  - id: airport
+    scenario: "airport arrival and departure"
+    details: "wearing casual travel clothes, holding suitcase or travel bag"
+
+  # 出租车 (Taxi / Ride)
+  - id: taxi
+    scenario: "taxi or ride-hailing"
+    details: "wearing casual clothing, holding smartphone or hailing a taxi"
+
+  # 酒店 (Hotel)
+  - id: hotel
+    scenario: "hotel check-in"
+    details: "wearing travel clothing, holding room key or luggage"
+
+  # 餐厅 (Restaurant)
+  - id: restaurant
+    scenario: "restaurant dining"
+    details: "wearing casual clothing, holding menu or plate of food"
+
+  # 付款 (Payment)
+  - id: payment
+    scenario: "making a payment"
+    details: "wearing casual clothing, holding credit card or smartphone with payment app"
+
+  # 购物 (Shopping)
+  - id: shopping
+    scenario: "shopping"
+    details: "wearing casual clothing, holding shopping bag"
+
+  # 问路 (Asking Directions)
+  - id: directions
+    scenario: "asking for directions"
+    details: "wearing casual clothing, holding map or smartphone with map"
+
+  # 紧急情况 (Emergency)
+  - id: emergency
+    scenario: "emergency situation"
+    details: "wearing casual clothing, holding phone calling for help"
+
+  # 标识 (Signs / Symbols)
+  - id: signs
+    scenario: "reading signs and symbols"
+    details: "wearing casual clothing, pointing at a sign or looking at direction signs"
+
+  # 咖啡 (Coffee)
+  - id: coffee
+    scenario: "coffee shop"
+    details: "wearing casual clothing, holding coffee cup"
+

@@ -22,12 +22,14 @@ class GenerationRequest:
     prompt: str
     width: int = 1024
     height: int = 1024
-    model: str = "图片生成4.0"
+    model: str = "文生图3.0"  # Default to 文生图3.0 (req_key: jimeng_t2i_v30)
     negative_prompt: str = ""
     seed: int | None = None
     num_images: int = 1
-    reference_image_path: str | None = None  # Path to reference image for image-to-image
-    reference_image_data: bytes | None = None  # Pre-loaded image data (base64 encoded)
+    # Path(s) to reference image(s) for image-to-image
+    reference_image_path: str | list[str] | None = None
+    # Pre-loaded image data (list of base64-encoded strings)
+    reference_image_data: list[str] | None = None
 
     # Additional provider-specific options
     extra: dict[str, Any] | None = None

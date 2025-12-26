@@ -73,7 +73,7 @@ class TestImageToImageGeneration:
         call_args = mock_http.post.call_args
         body = json.loads(call_args.kwargs["content"])
         assert body["model_version"] == "img2img_v1.0"
-        assert body["req_key"] == "high_aes_img2img_v10"
+        assert body["req_key"] == "jimeng_i2i_v30"
         assert "image_base64" in body
 
     def test_generate_with_reference_image_data(self, mock_env, test_image_base64):
@@ -166,7 +166,7 @@ class TestImageToImageGeneration:
 
         call_args = mock_http.post.call_args
         body = json.loads(call_args.kwargs["content"])
-        assert body["req_key"] == "high_aes_img2img_v10"
+        assert body["req_key"] == "jimeng_i2i_v30"
         assert body["model_version"] == "img2img_v1.0"
 
     @patch("imgcreator.utils.image.load_and_encode_image")

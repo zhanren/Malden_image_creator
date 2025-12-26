@@ -149,7 +149,17 @@ def generate(
                 f"{click.style(context.resolved_prompt[:60], fg='cyan')}..."
             )
             if context.reference_image_path:
-                click.echo(f"  Reference: {context.reference_image_path}")
+                ref_paths = (
+                    [context.reference_image_path]
+                    if isinstance(context.reference_image_path, str)
+                    else context.reference_image_path
+                )
+                if len(ref_paths) == 1:
+                    click.echo(f"  Reference: {ref_paths[0]}")
+                else:
+                    click.echo(f"  References ({len(ref_paths)}):")
+                    for ref_path in ref_paths:
+                        click.echo(f"    - {ref_path}")
 
             result = pipeline.run(context)
 

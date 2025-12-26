@@ -51,7 +51,8 @@ class SeriesConfig:
     style: str | None = None
     negative_prompt: str | None = None
     seed: int | None = None
-    reference_image: str | None = None  # Path to reference image for image-to-image
+    # Path(s) to reference image(s) for image-to-image
+    reference_image: str | list[str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""

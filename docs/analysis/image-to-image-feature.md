@@ -129,7 +129,7 @@ project/
 ```python
 if reference_image_path:
     model = "图生图3.0"  # img2img_v1.0
-    req_key = "high_aes_img2img_v10"
+    req_key = "jimeng_i2i_v30"
 else:
     model = config.api.model or "图片生成4.0"  # Default text-to-image
     req_key = "high_aes_general_v20"

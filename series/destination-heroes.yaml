@@ -1,0 +1,27 @@
+name: destination-heroes
+template: "A friendly golden puppy mascot, 3D cartoon style, premium mobile app illustration, scene set in {{destination}}, include recognizable but simplified landmarks and cultural elements, warm natural lighting, clean composition, square format, leave UI-safe negative space, no text, no watermark."
+
+defaults: {}
+
+config:
+  width: 1536
+  height: 1536
+  style: null  # Style is already included in the template
+  # Model: 图片生成4.0 is default from imgcreator.yaml
+
+items:
+  # United States
+  - id: united-states
+    destination: "United States"
+    # The dog will wear casual American travel clothing as per the variant specification
+
+  # Japan
+  - id: japan
+    destination: "Japan"
+    # The dog will wear simplified Japanese happi coat or modern streetwear as per variant
+
+  # Mexico
+  - id: mexico
+    destination: "Mexico"
+    # The dog will wear light serape or poncho with small sombrero as per variant
+

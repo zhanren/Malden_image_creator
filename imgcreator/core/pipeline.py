@@ -28,7 +28,8 @@ class GenerationContext:
     negative_prompt: str = ""
     output_dir: Path = field(default_factory=lambda: Path("./output"))
     seed: int | None = None
-    reference_image_path: str | None = None  # Path to reference image for image-to-image
+    # Path(s) to reference image(s) for image-to-image
+    reference_image_path: str | list[str] | None = None
 
     # Template context for variable substitution
     template_context: dict[str, Any] = field(default_factory=dict)
@@ -281,7 +282,11 @@ class GenerationPipeline:
         }
 
         if context.reference_image_path:
-            result["reference_image"] = context.reference_image_path
+            # Store as list for consistency
+            if isinstance(context.reference_image_path, str):
+                result["reference_image"] = [context.reference_image_path]
+            else:
+                result["reference_image"] = context.reference_image_path
 
         return result
 
@@ -305,7 +310,7 @@ class GenerationPipeline:
         # Ensure output directory exists
         context.output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Determine generation mode and load reference image if needed
+        # Determine generation mode and load reference image(s) if needed
         reference_image_data = None
         if context.reference_image_path:
             from imgcreator.utils.image import ImageLoadError, load_and_encode_image
@@ -313,11 +318,27 @@ class GenerationPipeline:
             try:
                 # Resolve path relative to project root
                 project_root = self.project_path
-                base64_str, image_bytes = load_and_encode_image(
-                    context.reference_image_path, project_root
+
+                # Handle both single image (string) and multiple images (list)
+                image_paths = (
+                    [context.reference_image_path]
+                    if isinstance(context.reference_image_path, str)
+                    else context.reference_image_path
                 )
-                reference_image_data = base64_str.encode("utf-8")
-                self._log(f"Using reference image: {context.reference_image_path}")
+
+                # Load and encode all reference images
+                base64_strings = []
+                for img_path in image_paths:
+                    base64_str, image_bytes = load_and_encode_image(img_path, project_root)
+                    base64_strings.append(base64_str)
+
+                reference_image_data = base64_strings
+
+                if len(image_paths) == 1:
+                    self._log(f"Using reference image: {image_paths[0]}")
+                else:
+                    paths_str = ', '.join(image_paths)
+                    self._log(f"Using {len(image_paths)} reference images: {paths_str}")
                 self._log("Mode: Image-to-image (图生图3.0)")
             except ImageLoadError as e:
                 self._log(f"Failed to load reference image: {e}")

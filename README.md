@@ -333,6 +333,23 @@ config:
 - Relative paths are resolved from project root (where `imgcreator.yaml` is located)
 - Absolute paths are used as-is
 
+**Recommended Location:**
+Create an `assets/` directory in your project root to store reference images:
+
+```bash
+mkdir assets
+# Place your reference images here, e.g.:
+# assets/base-style.png
+# assets/icon-style.png
+# assets/characters/main-character.png
+```
+
+Then reference them with relative paths:
+```yaml
+reference_image: "./assets/base-style.png"
+reference_image: "./assets/characters/main-character.png"
+```
+
 ### Example Use Cases
 
 **Style Transfer:**
@@ -496,6 +513,10 @@ img export output/cat_*.png --profile ios --profile android
 project/
 ├── imgcreator.yaml      # Project configuration
 ├── .env                 # API keys (not in git)
+├── assets/              # Reference images for image-to-image generation
+│   ├── base-style.png
+│   ├── icon-style.png
+│   └── characters/
 ├── series/              # Series definitions
 │   └── app-icons.yaml
 ├── output/              # Generated images

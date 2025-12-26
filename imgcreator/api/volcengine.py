@@ -1,7 +1,9 @@
 """Volcengine Jimeng AI (即梦AI) client for image generation.
 
 API Documentation:
+- 文生图3.0: https://www.volcengine.com/docs/85621/1616429
 - 文生图3.1: https://www.volcengine.com/docs/85621/1756900
+- 图生图3.0: https://www.volcengine.com/docs/85621/1747301
 - General: https://www.volcengine.com/docs/85621/1537648
 
 Implementation details:
@@ -10,7 +12,11 @@ Implementation details:
 - Action: CVProcess
 - Version: 2022-08-31
 - Authentication: V4 Signature (HMAC-SHA256)
-- req_key varies by model: high_aes_general_v14 (3.1), high_aes_general_v20 (4.0)
+- req_key varies by model:
+  - 文生图3.0: jimeng_t2i_v30
+  - 文生图3.1: jimeng_t2i_v31
+  - 图片生成4.0: high_aes_general_v20
+  - 图生图3.0: high_aes_img2img_v10
 """
 
 import base64
@@ -61,21 +67,28 @@ class VolcengineClient(ImageProvider):
     ACTION_TEXT2IMG = "CVProcess"
 
     # Model mapping: model name -> model_version
+    # Based on Volcengine API documentation:
+    # - 文生图3.0: https://www.volcengine.com/docs/85621/1616429
+    # - 文生图3.1: https://www.volcengine.com/docs/85621/1756900
     MODEL_MAPPING = {
         "图片生成4.0": "general_v2.0",
         "文生图3.1": "general_v1.4",
+        "文生图3.0": "general_v1.3",  # 文生图3.0 uses general_v1.3
         "图生图3.0": "img2img_v1.0",
     }
 
     # Request key mapping: model_version -> req_key
     # Based on Volcengine API documentation:
+    # - 文生图3.0 (general_v1.3): https://www.volcengine.com/docs/85621/1616429
+    #   req_key must be "jimeng_t2i_v30" (fixed value per documentation)
     # - 文生图3.1 (general_v1.4): https://www.volcengine.com/docs/85621/1756900
     #   req_key must be "jimeng_t2i_v31" (fixed value per documentation)
     # - 图片生成4.0 (general_v2.0): uses high_aes_general_v20
     REQ_KEY_MAPPING = {
         "general_v2.0": "high_aes_general_v20",
-        "general_v1.4": "jimeng_t2i_v31",  # For 文生图3.1 (fixed value per API docs)
-        "img2img_v1.0": "high_aes_img2img_v10",  # For 图生图3.0
+        "general_v1.4": "jimeng_t2i_v31",  # For 文生图3.1
+        "general_v1.3": "jimeng_t2i_v30",  # For 文生图3.0
+        "img2img_v1.0": "jimeng_i2i_v30",  # For 图生图3.0
     }
 
     def __init__(
@@ -330,9 +343,40 @@ class VolcengineClient(ImageProvider):
                         response_str = json.dumps(data, indent=2, ensure_ascii=False)
                         self._log(f"Full response: {response_str}")
                         self._log(f"Access Key ID (first 8 chars): {self.access_key_id[:8]}...")
+                        model_ver = body.get("model_version", "unknown")
+                        req_key_val = body.get("req_key", "unknown")
+                        self._log(f"Request body model_version: {model_ver}")
+                        self._log(f"Request body req_key: {req_key_val}")
 
                     # Provide more specific guidance based on error code
                     if error_code == "50400":
+                        # Check which model was being used
+                        model_used = body.get("model_version", "unknown")
+                        req_key_used = body.get("req_key", "unknown")
+
+                        model_suggestion = ""
+                        if model_used == "img2img_v1.0" or req_key_used == "jimeng_i2i_v30":
+                            model_suggestion = (
+                                "\n  6. You're using '图生图3.0' (image-to-image) API.\n"
+                                "     Verify you have permissions for 图生图3.0 service.\n"
+                                "     Documentation: https://www.volcengine.com/docs/85621/1747301\n"
+                                "     If permissions are correct, check binary_data_base64 format."
+                            )
+                        elif model_used == "general_v2.0" or req_key_used == "high_aes_general_v20":
+                            model_suggestion = (
+                                "\n  6. You're using '图片生成4.0' model which may require "
+                                "different permissions.\n"
+                                "     Try using '文生图3.1' instead: "
+                                "img generate --model '文生图3.1'\n"
+                                "     Or update your config: api.model: '文生图3.1'"
+                            )
+                        elif model_used == "general_v1.4" or req_key_used == "jimeng_t2i_v31":
+                            model_suggestion = (
+                                "\n  6. You're using '文生图3.1' model. "
+                                "If this fails, try '图片生成4.0':\n"
+                                "     img generate --model '图片生成4.0'"
+                            )
+
                         guidance = (
                             "Access Denied (50400) usually means:\n"
                             "  1. Your credentials are correct but lack specific permissions\n"
@@ -341,6 +385,7 @@ class VolcengineClient(ImageProvider):
                             "  4. Verify the service is enabled in: https://console.volcengine.com/\n"
                             "  5. Your key accessed '智能视觉' but may need "
                             "'即梦AI' specific permissions"
+                            + model_suggestion
                         )
                     else:
                         guidance = (
@@ -429,21 +474,43 @@ class VolcengineClient(ImageProvider):
             or request.reference_image_data is not None
         )
 
+        # Normalize reference_image_path to list for consistent handling
+        reference_paths = None
+        if request.reference_image_path:
+            reference_paths = (
+                [request.reference_image_path]
+                if isinstance(request.reference_image_path, str)
+                else request.reference_image_path
+            )
+
         if has_reference:
-            # Image-to-image mode: use 图生图3.0
+            # Image-to-image mode: use 图生图3.0 (智能参考)
+            # Documentation: https://www.volcengine.com/docs/85621/1747301
+            # Required parameters per API docs:
+            # - req_key: "high_aes_img2img_v10" (fixed value for 图生图3.0)
+            # - model_version: "img2img_v1.0" (fixed value for 图生图3.0)
+            # - prompt: text description
+            # - binary_data_base64: array of base64-encoded image strings (required)
+            # - width, height: output dimensions
             model_version = "img2img_v1.0"
-            req_key = self.REQ_KEY_MAPPING.get(model_version, "high_aes_img2img_v10")
+            req_key = self.REQ_KEY_MAPPING.get(model_version, "jimeng_i2i_v30")
             self._log("Using image-to-image mode (图生图3.0)")
+            self._log(
+                f"图生图3.0 API format: model_version={model_version}, "
+                f"req_key={req_key}"
+            )
         else:
             # Text-to-image mode: use specified model or default
-            model_version = self.MODEL_MAPPING.get(request.model, "general_v2.0")
+            model_version = self.MODEL_MAPPING.get(request.model, "general_v1.3")
             req_key = self.REQ_KEY_MAPPING.get(
-                model_version, "high_aes_general_v20"  # Default to v2.0 for 图片生成4.0
+                model_version, "jimeng_t2i_v30"  # Default to 文生图3.0
             )
             self._log(f"Using text-to-image mode (model: {request.model})")
 
         # Build request body according to Volcengine API documentation
-        # Reference: https://www.volcengine.com/docs/85621/1756900 (文生图3.1)
+        # Reference:
+        # - 文生图3.1: https://www.volcengine.com/docs/85621/1756900
+        # - 图生图3.0: https://www.volcengine.com/docs/85621/1747301
         body = {
             "req_key": req_key,
             "prompt": request.prompt,
@@ -456,25 +523,59 @@ class VolcengineClient(ImageProvider):
             },
         }
 
-        # Add reference image for image-to-image mode
+        # Add reference image(s) for image-to-image mode (图生图3.0)
+        # According to https://www.volcengine.com/docs/85621/1747301
         if has_reference:
             if request.reference_image_data:
-                # Pre-encoded base64 data
-                if isinstance(request.reference_image_data, bytes):
-                    image_base64 = request.reference_image_data.decode("utf-8")
+                # Pre-encoded base64 data (list of strings)
+                if isinstance(request.reference_image_data, list):
+                    image_base64_list = request.reference_image_data
                 else:
-                    image_base64 = request.reference_image_data
+                    # Legacy: single base64 string (bytes or str)
+                    if isinstance(request.reference_image_data, bytes):
+                        image_base64_list = [request.reference_image_data.decode("utf-8")]
+                    else:
+                        image_base64_list = [request.reference_image_data]
             else:
-                # Need to load and encode
+                # Need to load and encode from path(s)
                 from imgcreator.api.base import GenerationError
                 from imgcreator.utils.image import ImageLoadError, load_and_encode_image
 
-                try:
-                    image_base64, _ = load_and_encode_image(request.reference_image_path)
-                except ImageLoadError as e:
-                    # Convert to GenerationError for consistent error handling
-                    raise GenerationError(str(e), provider="volcengine") from e
-            body["image_base64"] = image_base64
+                image_base64_list = []
+                paths_to_load = reference_paths or []
+
+                for img_path in paths_to_load:
+                    try:
+                        base64_str, _ = load_and_encode_image(img_path)
+                        image_base64_list.append(base64_str)
+                    except ImageLoadError as e:
+                        # Convert to GenerationError for consistent error handling
+                        raise GenerationError(
+                            f"Failed to load reference image '{img_path}': {e}",
+                            provider="volcengine"
+                        ) from e
+
+            # For 图生图3.0, add binary_data_base64 to request body
+            # Documentation: https://www.volcengine.com/docs/85621/1747301
+            # Parameter name: "binary_data_base64" (array of string, required)
+            # Value: array of base64-encoded strings (without data URI prefix)
+            # Per API docs: "图片文件base64编码,需输入1张图片" (requires 1 image)
+            # Note: API structure supports array. We send all provided images.
+            body["binary_data_base64"] = image_base64_list
+
+            if len(image_base64_list) == 1:
+                self._log(
+                    f"Added reference image for 图生图3.0 "
+                    f"(base64 length: {len(image_base64_list[0])}, "
+                    f"model_version: {model_version}, req_key: {req_key})"
+                )
+            else:
+                total_length = sum(len(img) for img in image_base64_list)
+                self._log(
+                    f"Added {len(image_base64_list)} reference images for 图生图3.0 "
+                    f"(total base64 length: {total_length}, "
+                    f"model_version: {model_version}, req_key: {req_key})"
+                )
 
         if request.negative_prompt:
             body["negative_prompt"] = request.negative_prompt
@@ -484,6 +585,22 @@ class VolcengineClient(ImageProvider):
 
         if request.num_images > 1:
             body["batch_size"] = min(request.num_images, 4)  # Max 4
+
+        # Log complete request body structure (truncate binary_data_base64 for readability)
+        if self.verbose:
+            body_for_log = body.copy()
+            if "binary_data_base64" in body_for_log:
+                # binary_data_base64 is an array, get first element
+                b64_array = body_for_log["binary_data_base64"]
+                if b64_array and len(b64_array) > 0:
+                    image_b64 = b64_array[0]
+                    body_for_log["binary_data_base64"] = [
+                        f"{image_b64[:50]}... (truncated, total length: {len(image_b64)})"
+                    ]
+            self._log("=" * 60)
+            self._log("Complete Request Body:")
+            self._log(json.dumps(body_for_log, indent=2, ensure_ascii=False))
+            self._log("=" * 60)
 
         self._log(f"Generating image: {request.prompt[:50]}...")
 
