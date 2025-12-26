@@ -1,0 +1,61 @@
+name: scenario-icons
+template: "
+一只友好的金色小狗吉祥物，戴着帽子，2D卡通风格， 
+{{scenario}}， 
+友好表情，居中构图，方形格式，透明背景。 
+风格：柔和温暖的光线，简洁的形状，极简设计，高分辨率，清晰对焦。 
+约束：无文字，无水印，无圆形或圆形边界。 
+用途：移动应用场景卡片图标。
+"
+
+defaults: {}
+
+config:
+  width: 1024
+  height: 1024
+  style: null  # Style is already included in the template
+  reference_image: 
+    - "./assets/icon-style.png" # Use reference image for style transfer
+  # Model: 文生图3.1 is default from imgcreator.yaml
+
+items:
+  # 机场 (Airport / Arrival / Departure)
+  - id: airport
+    scenario: "背景换成机场，在机场候机大厅"
+
+  # 出租车 (Taxi / Ride)
+  - id: taxi
+    scenario: "背景换成城市街道，在出租车旁"
+
+  # 酒店 (Hotel)
+  - id: hotel
+    scenario: "背景换成酒店大堂，在酒店前台"
+
+  # 餐厅 (Restaurant)
+  - id: restaurant
+    scenario: "背景换成餐厅，在餐厅内"
+
+  # 付款 (Payment)
+  - id: payment
+    scenario: "背景换成商店，在收银台"
+
+  # 购物 (Shopping)
+  - id: shopping
+    scenario: "背景换成商场，在购物中心"
+
+  # 问路 (Asking Directions)
+  - id: directions
+    scenario: "背景换成城市街道，在路口"
+
+  # 紧急情况 (Emergency)
+  - id: emergency
+    scenario: "背景换成城市街道，在紧急情况下"
+
+  # 标识 (Signs / Symbols)
+  - id: signs
+    scenario: "背景换成公共场所，在指示牌前"
+
+  # 咖啡 (Coffee)
+  - id: coffee
+    scenario: "背景换成咖啡店，在咖啡店内"
+

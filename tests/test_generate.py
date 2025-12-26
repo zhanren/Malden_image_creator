@@ -371,6 +371,7 @@ class TestPipelineIntegration:
         config.defaults.height = 512
         config.defaults.style = ""
         config.defaults.negative_prompt = ""
+        config.defaults.reference_image = None  # No reference image for this test
         config.output.base_dir = str(tmp_path)
 
         # Create mock client
@@ -399,6 +400,7 @@ class TestPipelineIntegration:
         config.defaults.height = 512
         config.defaults.style = ""
         config.defaults.negative_prompt = ""
+        config.defaults.reference_image = None  # No reference image for this test
         config.output.base_dir = str(tmp_path)
 
         # Create mock client that returns failure

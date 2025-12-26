@@ -20,6 +20,7 @@ import yaml
 VALID_MODELS = [
     "图片生成4.0",
     "文生图3.1",
+    "文生图3.0",
     "图生图3.0",
 ]
 
@@ -50,7 +51,7 @@ class APIConfig:
     """API configuration."""
 
     provider: str = "volcengine"
-    model: str = "图片生成4.0"
+    model: str = "文生图3.0"  # Default to 文生图3.0 (req_key: jimeng_t2i_v30)
     timeout: int = 60
     max_retries: int = 3
     retry_delay: float = 1.0
@@ -64,6 +65,8 @@ class DefaultsConfig:
     height: int = 1024
     style: str = ""
     negative_prompt: str = ""
+    # Path(s) to reference image(s) for image-to-image
+    reference_image: str | list[str] | None = None
 
 
 @dataclass
@@ -216,6 +219,26 @@ def validate_config(config_dict: dict[str, Any]) -> list[str]:
         if height is not None and (not isinstance(height, int) or height <= 0):
             errors.append(f"Invalid height: {height}. Must be a positive integer.")
 
+        reference_image = defaults.get("reference_image")
+        if reference_image is not None:
+            if isinstance(reference_image, str):
+                # Single image path - validate it exists
+                if not Path(reference_image).exists() and not Path(reference_image).is_absolute():
+                    # Relative path - might be valid, just warn
+                    pass
+            elif isinstance(reference_image, list):
+                # Multiple image paths - validate all are strings
+                for img_path in reference_image:
+                    if not isinstance(img_path, str):
+                        errors.append(
+                            "Invalid reference_image: list must contain only string paths."
+                        )
+                        break
+            else:
+                errors.append(
+                    "Invalid reference_image: must be a string path or list of string paths."
+                )
+
     return errors
 
 
@@ -231,7 +254,7 @@ def dict_to_config(config_dict: dict[str, Any]) -> Config:
     api_dict = config_dict.get("api", {})
     api = APIConfig(
         provider=api_dict.get("provider", "volcengine"),
-        model=api_dict.get("model", "图片生成4.0"),
+        model=api_dict.get("model", "文生图3.0"),
         timeout=api_dict.get("timeout", 60),
         max_retries=api_dict.get("max_retries", 3),
         retry_delay=api_dict.get("retry_delay", 1.0),
@@ -243,6 +266,7 @@ def dict_to_config(config_dict: dict[str, Any]) -> Config:
         height=defaults_dict.get("height", 1024),
         style=defaults_dict.get("style", ""),
         negative_prompt=defaults_dict.get("negative_prompt", ""),
+        reference_image=defaults_dict.get("reference_image"),
     )
 
     output_dict = config_dict.get("output", {})

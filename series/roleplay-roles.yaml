@@ -1,0 +1,39 @@
+name: roleplay-roles
+template: "
+一只友好的金色小狗吉祥物，戴着帽子，2D卡通风格， 
+扮演{{role}}角色，{{details}}， 
+友好且专业的表情，居中构图，方形格式，透明背景。 
+风格：柔和温暖的光线，简洁的形状，极简设计，高分辨率，清晰对焦。 
+约束：无文字，无水印，无圆形或圆形边界。 
+用途：移动应用角色扮演屏幕角色图标。
+"
+
+defaults: {}
+
+config:
+  width: 1024
+  height: 1024
+  style: null  # Style is already included in the template
+  # Model: 图片生成4.0 is default from imgcreator.yaml
+
+items:
+  # Restaurant → waiter dog
+  - id: waiter
+    role: "餐厅服务员"
+    details: "穿着服务员制服和围裙，拿着菜单或托盘"
+
+  # Taxi → driver dog
+  - id: driver
+    role: "出租车司机"
+    details: "穿着专业司机服装，拿着方向盘或出租车标志"
+
+  # Hotel → front desk dog
+  - id: front-desk
+    role: "酒店前台接待员"
+    details: "穿着专业酒店制服，拿着房间钥匙或预订簿"
+
+  # Coffee → barista dog
+  - id: barista
+    role: "咖啡师"
+    details: "穿着咖啡师围裙和休闲制服，拿着咖啡杯或意式咖啡机"
+

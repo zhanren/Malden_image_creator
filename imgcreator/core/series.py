@@ -51,6 +51,8 @@ class SeriesConfig:
     style: str | None = None
     negative_prompt: str | None = None
     seed: int | None = None
+    # Path(s) to reference image(s) for image-to-image
+    reference_image: str | list[str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -67,6 +69,8 @@ class SeriesConfig:
             result["negative_prompt"] = self.negative_prompt
         if self.seed is not None:
             result["seed"] = self.seed
+        if self.reference_image is not None:
+            result["reference_image"] = self.reference_image
         return result
 
 
@@ -190,7 +194,12 @@ class SeriesLoader:
             style=config_data.get("style"),
             negative_prompt=config_data.get("negative_prompt"),
             seed=config_data.get("seed"),
+            reference_image=config_data.get("reference_image"),
         )
+
+        # Also check for reference_image at series level (for convenience)
+        if "reference_image" in data and not series.config.reference_image:
+            series.config.reference_image = data.get("reference_image")
 
         # Parse items
         items_data = data.get("items", [])

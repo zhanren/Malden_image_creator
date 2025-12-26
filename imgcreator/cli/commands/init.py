@@ -12,8 +12,8 @@ DEFAULT_CONFIG = """\
 # API Configuration
 api:
   provider: volcengine
-  # Model options: "图片生成4.0", "文生图3.1"
-  model: "图片生成4.0"
+  # Model options: "文生图3.0", "文生图3.1", "图片生成4.0"
+  model: "文生图3.0"
 
 # Default generation settings
 defaults:

@@ -141,9 +141,25 @@ def generate(
                 return
 
             # Run generation
-            click.echo(
-                f"Generating image: {click.style(context.resolved_prompt[:60], fg='cyan')}..."
+            api_mode = (
+                "Image-to-image" if context.reference_image_path else "Text-to-image"
             )
+            click.echo(
+                f"Generating image ({api_mode}): "
+                f"{click.style(context.resolved_prompt[:60], fg='cyan')}..."
+            )
+            if context.reference_image_path:
+                ref_paths = (
+                    [context.reference_image_path]
+                    if isinstance(context.reference_image_path, str)
+                    else context.reference_image_path
+                )
+                if len(ref_paths) == 1:
+                    click.echo(f"  Reference: {ref_paths[0]}")
+                else:
+                    click.echo(f"  References ({len(ref_paths)}):")
+                    for ref_path in ref_paths:
+                        click.echo(f"    - {ref_path}")
 
             result = pipeline.run(context)
 
@@ -182,6 +198,9 @@ def _output_result(data: dict, format: str, is_dry_run: bool = False) -> None:
             click.echo(f"  Prompt:           {data.get('prompt', '')}")
             click.echo(f"  Resolved Prompt:  {data.get('resolved_prompt', '')}")
             click.echo(f"  Model:            {data.get('model', '')}")
+            click.echo(f"  API Mode:         {data.get('api_mode', 'Text-to-image')}")
+            if data.get("reference_image"):
+                click.echo(f"  Reference Image:  {data.get('reference_image', '')}")
             click.echo(f"  Dimensions:       {data.get('dimensions', '')}")
             click.echo(f"  Style:            {data.get('style', '')}")
             click.echo(f"  Negative Prompt:  {data.get('negative_prompt', '')}")
@@ -387,6 +406,8 @@ def _create_item_context(series, item, config, output_dir):
         series.config.negative_prompt or config.defaults.negative_prompt
     )
     seed = series.config.seed
+    # Reference image: series config > project default
+    reference_image = series.config.reference_image or config.defaults.reference_image
 
     # Use item data as template context
     template_context = item.data.copy()
@@ -402,6 +423,7 @@ def _create_item_context(series, item, config, output_dir):
         negative_prompt=negative_prompt,
         output_dir=Path(output_dir) if output_dir else Path(config.output.base_dir),
         seed=seed,
+        reference_image_path=reference_image,
         template_context=template_context,
         template_defaults=template_defaults,
     )

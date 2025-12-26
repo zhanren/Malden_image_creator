@@ -28,6 +28,8 @@ class GenerationContext:
     negative_prompt: str = ""
     output_dir: Path = field(default_factory=lambda: Path("./output"))
     seed: int | None = None
+    # Path(s) to reference image(s) for image-to-image
+    reference_image_path: str | list[str] | None = None
 
     # Template context for variable substitution
     template_context: dict[str, Any] = field(default_factory=dict)
@@ -82,6 +84,7 @@ class GenerationContext:
             "negative_prompt": self.negative_prompt,
             "output_dir": str(self.output_dir),
             "seed": self.seed,
+            "reference_image_path": self.reference_image_path,
         }
 
 
@@ -168,7 +171,7 @@ class GenerationPipeline:
     def _ensure_config(self) -> Config:
         """Ensure config is loaded."""
         if self.config is None:
-            loader = ConfigLoader(verbose=self.verbose)
+            loader = ConfigLoader(project_path=self.project_path, verbose=self.verbose)
             self.config = loader.load()
         return self.config
 
@@ -207,6 +210,7 @@ class GenerationPipeline:
         negative_prompt: str | None = None,
         output_dir: Path | None = None,
         seed: int | None = None,
+        reference_image_path: str | None = None,
     ) -> GenerationContext:
         """Create a generation context with config defaults.
 
@@ -219,11 +223,15 @@ class GenerationPipeline:
             negative_prompt: Override negative prompt
             output_dir: Override output directory
             seed: Random seed for reproducibility
+            reference_image_path: Path to reference image for image-to-image
 
         Returns:
             GenerationContext with resolved values
         """
         config = self._ensure_config()
+
+        # Resolve reference_image_path: CLI override > config default
+        resolved_reference = reference_image_path or config.defaults.reference_image
 
         # Use provided values or fall back to config
         ctx = GenerationContext(
@@ -237,6 +245,7 @@ class GenerationPipeline:
             else config.defaults.negative_prompt,
             output_dir=output_dir or Path(config.output.base_dir),
             seed=seed,
+            reference_image_path=resolved_reference,
         )
 
         # Resolve the final prompt
@@ -256,7 +265,10 @@ class GenerationPipeline:
         filename = generate_filename(context.resolved_prompt)
         output_path = context.output_dir / filename
 
-        return {
+        # Determine API mode
+        api_mode = "Image-to-image (图生图3.0)" if context.reference_image_path else "Text-to-image"
+
+        result = {
             "prompt": context.prompt,
             "resolved_prompt": context.resolved_prompt,
             "model": context.model,
@@ -265,8 +277,18 @@ class GenerationPipeline:
             "negative_prompt": context.negative_prompt or "(none)",
             "seed": context.seed,
             "output_path": str(output_path),
+            "api_mode": api_mode,
             "api_call": "Would call Volcengine CVProcess API",
         }
+
+        if context.reference_image_path:
+            # Store as list for consistency
+            if isinstance(context.reference_image_path, str):
+                result["reference_image"] = [context.reference_image_path]
+            else:
+                result["reference_image"] = context.reference_image_path
+
+        return result
 
     def run(self, context: GenerationContext) -> PipelineResult:
         """Run the generation pipeline.
@@ -288,6 +310,47 @@ class GenerationPipeline:
         # Ensure output directory exists
         context.output_dir.mkdir(parents=True, exist_ok=True)
 
+        # Determine generation mode and load reference image(s) if needed
+        reference_image_data = None
+        if context.reference_image_path:
+            from imgcreator.utils.image import ImageLoadError, load_and_encode_image
+
+            try:
+                # Resolve path relative to project root
+                project_root = self.project_path
+
+                # Handle both single image (string) and multiple images (list)
+                image_paths = (
+                    [context.reference_image_path]
+                    if isinstance(context.reference_image_path, str)
+                    else context.reference_image_path
+                )
+
+                # Load and encode all reference images
+                base64_strings = []
+                for img_path in image_paths:
+                    base64_str, image_bytes = load_and_encode_image(img_path, project_root)
+                    base64_strings.append(base64_str)
+
+                reference_image_data = base64_strings
+
+                if len(image_paths) == 1:
+                    self._log(f"Using reference image: {image_paths[0]}")
+                else:
+                    paths_str = ', '.join(image_paths)
+                    self._log(f"Using {len(image_paths)} reference images: {paths_str}")
+                self._log("Mode: Image-to-image (图生图3.0)")
+            except ImageLoadError as e:
+                self._log(f"Failed to load reference image: {e}")
+                return PipelineResult(
+                    success=False,
+                    duration_ms=int((time.time() - start_time) * 1000),
+                    context=context,
+                    error_message=str(e),
+                )
+        else:
+            self._log("Mode: Text-to-image")
+
         # Create API request
         request = GenerationRequest(
             prompt=context.resolved_prompt,
@@ -296,6 +359,8 @@ class GenerationPipeline:
             model=context.model,
             negative_prompt=context.negative_prompt,
             seed=context.seed,
+            reference_image_path=context.reference_image_path,
+            reference_image_data=reference_image_data,
         )
 
         # Call API
