@@ -64,6 +64,7 @@ class DefaultsConfig:
     height: int = 1024
     style: str = ""
     negative_prompt: str = ""
+    reference_image: str | None = None  # Path to reference image for image-to-image
 
 
 @dataclass
@@ -216,6 +217,12 @@ def validate_config(config_dict: dict[str, Any]) -> list[str]:
         if height is not None and (not isinstance(height, int) or height <= 0):
             errors.append(f"Invalid height: {height}. Must be a positive integer.")
 
+        reference_image = defaults.get("reference_image")
+        if reference_image is not None and not isinstance(reference_image, str):
+            errors.append(
+                "Invalid reference_image: must be a string path to image file."
+            )
+
     return errors
 
 
@@ -243,6 +250,7 @@ def dict_to_config(config_dict: dict[str, Any]) -> Config:
         height=defaults_dict.get("height", 1024),
         style=defaults_dict.get("style", ""),
         negative_prompt=defaults_dict.get("negative_prompt", ""),
+        reference_image=defaults_dict.get("reference_image"),
     )
 
     output_dict = config_dict.get("output", {})

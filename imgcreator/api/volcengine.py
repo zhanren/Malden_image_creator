@@ -413,25 +413,34 @@ class VolcengineClient(ImageProvider):
         raise last_error or GenerationError("Unknown error", provider=self.name)
 
     def generate(self, request: GenerationRequest) -> GenerationResult:
-        """Generate images from a text prompt.
+        """Generate images from a text prompt or reference image.
 
         Args:
-            request: Generation parameters
+            request: Generation parameters (may include reference_image_path)
 
         Returns:
             GenerationResult with images or error info
         """
         start_time = time.time()
 
-        # Map model name to model_version
-        model_version = self.MODEL_MAPPING.get(request.model, "general_v2.0")
-
-        # Get req_key based on model_version
-        # Different models require different req_key values per API documentation
-        # For 文生图3.1, req_key must be "jimeng_t2i_v31" (fixed value per docs)
-        req_key = self.REQ_KEY_MAPPING.get(
-            model_version, "high_aes_general_v20"  # Default to v2.0 for 图片生成4.0
+        # Determine generation mode: image-to-image if reference provided
+        has_reference = (
+            request.reference_image_path is not None
+            or request.reference_image_data is not None
         )
+
+        if has_reference:
+            # Image-to-image mode: use 图生图3.0
+            model_version = "img2img_v1.0"
+            req_key = self.REQ_KEY_MAPPING.get(model_version, "high_aes_img2img_v10")
+            self._log("Using image-to-image mode (图生图3.0)")
+        else:
+            # Text-to-image mode: use specified model or default
+            model_version = self.MODEL_MAPPING.get(request.model, "general_v2.0")
+            req_key = self.REQ_KEY_MAPPING.get(
+                model_version, "high_aes_general_v20"  # Default to v2.0 for 图片生成4.0
+            )
+            self._log(f"Using text-to-image mode (model: {request.model})")
 
         # Build request body according to Volcengine API documentation
         # Reference: https://www.volcengine.com/docs/85621/1756900 (文生图3.1)
@@ -446,6 +455,26 @@ class VolcengineClient(ImageProvider):
                 "add_logo": False,
             },
         }
+
+        # Add reference image for image-to-image mode
+        if has_reference:
+            if request.reference_image_data:
+                # Pre-encoded base64 data
+                if isinstance(request.reference_image_data, bytes):
+                    image_base64 = request.reference_image_data.decode("utf-8")
+                else:
+                    image_base64 = request.reference_image_data
+            else:
+                # Need to load and encode
+                from imgcreator.api.base import GenerationError
+                from imgcreator.utils.image import ImageLoadError, load_and_encode_image
+
+                try:
+                    image_base64, _ = load_and_encode_image(request.reference_image_path)
+                except ImageLoadError as e:
+                    # Convert to GenerationError for consistent error handling
+                    raise GenerationError(str(e), provider="volcengine") from e
+            body["image_base64"] = image_base64
 
         if request.negative_prompt:
             body["negative_prompt"] = request.negative_prompt

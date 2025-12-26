@@ -7,6 +7,7 @@ AI-powered CLI tool for generating themed image series using Volcengine Jimeng A
 - 🚀 **Quick Setup** - Initialize projects in seconds
 - 🎨 **Template Engine** - Reusable prompts with variable substitution
 - 📦 **Series Generation** - Batch generate consistent icon sets
+- 🖼️ **Image-to-Image** - Style transfer and character adaptation with reference images
 - 📱 **Export Profiles** - iOS (@1x/@2x/@3x) and Android (density buckets) support
 - 📊 **History Tracking** - Review past generations and iterate
 - ⚙️ **3-Layer Config** - Global → Project → Per-image configuration
@@ -251,6 +252,7 @@ defaults:
 config:
   width: 512
   height: 512
+  reference_image: "./assets/icon-style.png"  # Optional: series-specific reference image
 items:
   - id: home
     subject: "home house"
@@ -278,6 +280,7 @@ defaults:
   width: 1024
   height: 1024
   style: "flat, minimal, modern"
+  reference_image: "./assets/base-style.png"  # Optional: path to reference image for image-to-image
 
 output:
   base_dir: ./output
@@ -295,7 +298,97 @@ defaults:
   style: "global default style"
 ```
 
-**Config Precedence:** Per-image > Project > Global
+**Config Precedence:** Per-image > Series > Project > Global
+
+## Image-to-Image Generation
+
+You can generate images based on a reference image (style transfer or character adaptation) by specifying a `reference_image` path in your configuration.
+
+### How It Works
+
+- **Text-to-Image (default)**: When no `reference_image` is specified, uses 文生图 (text-to-image) API
+- **Image-to-Image**: When `reference_image` is specified, automatically uses 图生图3.0 (image-to-image) API
+
+The system automatically detects which mode to use based on whether a reference image is provided.
+
+### Configuration
+
+**Global Default:**
+```yaml
+# imgcreator.yaml
+defaults:
+  reference_image: "./assets/base-style.png"  # Applies to all generations
+```
+
+**Series-Level:**
+```yaml
+# series/app-icons.yaml
+config:
+  reference_image: "./assets/series-style.png"  # Overrides project default for this series
+```
+
+**Supported Formats:** PNG, JPG, JPEG
+
+**Path Resolution:**
+- Relative paths are resolved from project root (where `imgcreator.yaml` is located)
+- Absolute paths are used as-is
+
+### Example Use Cases
+
+**Style Transfer:**
+```yaml
+# imgcreator.yaml
+defaults:
+  reference_image: "./assets/icon-style.png"
+  style: "flat, minimal"
+
+# Generate icons matching the reference style
+img generate --prompt "home icon"
+```
+
+**Character Adaptation:**
+```yaml
+# series/character-variations.yaml
+name: character-variations
+template: "{{character}} in {{scene}}"
+config:
+  reference_image: "./assets/main-character.png"
+items:
+  - id: home-scene
+    character: "main character"
+    scene: "cozy home interior"
+  - id: outdoor-scene
+    character: "main character"
+    scene: "sunny park"
+```
+
+### CLI Output
+
+The CLI shows which API mode is being used:
+
+```bash
+$ img generate --prompt "test" --dry-run
+Dry Run Preview:
+  Prompt:           test
+  Resolved Prompt:  test
+  Model:            图片生成4.0
+  API Mode:         Text-to-image
+  Dimensions:       1024x1024
+  ...
+
+$ img generate --prompt "test"  # with reference_image in config
+Generating image (Image-to-image): test...
+  Reference: ./assets/base-style.png
+```
+
+### Error Handling
+
+If a reference image file is not found or invalid, you'll get clear error messages:
+
+```bash
+✗ Reference image not found: ./assets/missing.png
+  Check that the file exists and path is correct.
+```
 
 ## Testing
 
